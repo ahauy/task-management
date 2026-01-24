@@ -1,5 +1,7 @@
 import mongoose from "mongoose"
 
+export const TASK_STATUS = ['initial', 'doing', 'completed', 'pending', 'deleted']
+
 const taskSchema = new mongoose.Schema(
   {
     title: {
@@ -10,7 +12,7 @@ const taskSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ['initial', 'doing', 'completed', 'pending', 'deleted'], // Chỉ cho phép các giá trị này
+      enum: TASK_STATUS, // Chỉ cho phép các giá trị này
       default: 'initial' // Mặc định là 'initial' nếu không truyền vào
     },
     content: {
