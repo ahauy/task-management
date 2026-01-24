@@ -1,3 +1,4 @@
+import { searchHelpers } from './../../../helpers/searchHelpers';
 import { type Request, type Response } from "express";
 import Task, { TASK_STATUS } from "../models/task.model";
 import { paginationHelpers } from "../../../helpers/paginationHelpers";
@@ -5,8 +6,9 @@ import { paginationHelpers } from "../../../helpers/paginationHelpers";
 export const index = async (req: Request, res: Response) => {
   try {
     interface Find {
-      deleted: boolean;
-      status?: string;
+      deleted: boolean,
+      status?: string,
+      title?: RegExp
     }
 
     const find: Find = {
@@ -38,6 +40,12 @@ export const index = async (req: Request, res: Response) => {
       },
       countPage
     );
+
+    // tìm kiếm theo tiêu đề
+    const objSearch = searchHelpers(req.query)
+    if(req.query.keyword && objSearch.title) {
+      find.title = objSearch.title
+    }
 
     const tasks = await Task.find(find)
       .sort(sort)
