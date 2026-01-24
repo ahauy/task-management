@@ -22,6 +22,14 @@ export const index = async (req: Request, res: Response) => {
       })
     }
 
+    // Key là string, Value cũng là any (để Mongoose tự xử lý)
+    const sort: Record<string, any> = {}
+    // sắp xếp theo công việc
+    if(req.query.sortKey && req.query.sortValue) {
+      const sortKey = req.query.sortKey.toString()
+      sort[sortKey] = req.query.sortValue.toString()
+    }
+
     const tasks = await Task.find(find);
 
     res.json(tasks);
