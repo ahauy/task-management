@@ -6,4 +6,6 @@ routes.get("/", controller.index);
 
 routes.get("/detail/:id", controller.detailTask)
 
+routes.patch("/change-status/:id", controller.changeStatus)
+
 export const taskRoutes: Router = routes
