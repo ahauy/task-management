@@ -8,4 +8,6 @@ routes.get("/detail/:id", controller.detailTask)
 
 routes.patch("/change-status/:id", controller.changeStatus)
 
+routes.patch("/change-multi", controller.changeMulti)
+
 export const taskRoutes: Router = routes

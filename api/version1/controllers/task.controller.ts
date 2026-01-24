@@ -77,7 +77,7 @@ export const detailTask = async (req: Request, res: Response) => {
 export const changeStatus = async (req: Request, res: Response) => {
   try {
     const id = req.params.id;
-    const status = req.body.status; // Lấy status người dùng gửi lên
+    const status: string = req.body.status; // Lấy status người dùng gửi lên
 
     // 1. Kiểm tra ID có tồn tại không
     if (!id) {
@@ -121,6 +121,101 @@ export const changeStatus = async (req: Request, res: Response) => {
     console.log(e); // Log lỗi ra terminal để debug
     return res.status(500).json({
       // 500: Lỗi Server
+      code: 500,
+      message: "Lỗi hệ thống!",
+    });
+  }
+};
+
+export const changeMulti = async (req: Request, res: Response) => {
+  try {
+    // 1. Lấy dữ liệu
+    const ids: string[] = req.body.ids;
+    const key: string = req.body.key;
+    const value: string = req.body.value;
+
+    // 2. Validate cơ bản
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ 
+        code: 400,
+        message: "Danh sách ID không hợp lệ hoặc rỗng !!",
+      });
+    }
+
+    if (!key) {
+      return res.status(400).json({
+        code: 400,
+        message: "Thiếu trường muốn thay đổi !!",
+      });
+    }
+
+    // 3. Xử lý theo từng loại Key
+    switch (key) {
+      case "status":
+        // Validate kỹ hơn: Value gửi lên có nằm trong danh sách cho phép không?
+        if (!TASK_STATUS.includes(value)) {
+            return res.status(400).json({
+                code: 400,
+                message: "Trạng thái công việc không hợp lệ !!",
+            });
+        }
+
+        // Thực hiện Update
+        const resultStatus = await Task.updateMany(
+          {
+            _id: { $in: ids }, // Tìm các task có ID nằm trong danh sách
+            deleted: false,    // Chỉ update task chưa bị xóa
+          },
+          {
+            status: value,
+          }
+        );
+
+        // Kiểm tra xem có bản ghi nào được update không
+        // matchedCount = 0 nghĩa là không tìm thấy task nào với ID đó
+        if (resultStatus.matchedCount === 0) {
+          return res.status(404).json({
+            // 404: Not Found
+            code: 404,
+            message: "Không tìm thấy công việc (hoặc đã bị xóa)!",
+          });
+        }
+
+        // Báo kết quả
+        return res.status(200).json({
+            code: 200,
+            message: "Cập nhật trạng thái thành công !!",
+            data: {
+                matched: resultStatus.matchedCount, // Số bản ghi tìm thấy
+                modified: resultStatus.modifiedCount // Số bản ghi thực sự thay đổi
+            }
+        });
+
+      // Mở rộng thêm: Trường hợp muốn xóa nhiều (Soft Delete)
+      case "delete": 
+        const resultDelete = await Task.updateMany(
+            { _id: { $in: ids }, deleted: false },
+            { 
+                deleted: true,
+                deletedAt: new Date() // Lưu thời gian xóa
+            }
+        );
+        
+        return res.status(200).json({
+            code: 200,
+            message: "Xóa thành công các công việc đã chọn !!",
+        });
+
+      default:
+        return res.status(400).json({
+          code: 400,
+          message: "Trường dữ liệu này không được phép thay đổi !!",
+        });
+    }
+
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({
       code: 500,
       message: "Lỗi hệ thống!",
     });
