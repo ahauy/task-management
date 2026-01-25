@@ -136,7 +136,7 @@ export const changeMulti = async (req: Request, res: Response) => {
 
     // 2. Validate cơ bản
     if (!ids || !Array.isArray(ids) || ids.length === 0) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         code: 400,
         message: "Danh sách ID không hợp lệ hoặc rỗng !!",
       });
@@ -154,17 +154,17 @@ export const changeMulti = async (req: Request, res: Response) => {
       case "status":
         // Validate kỹ hơn: Value gửi lên có nằm trong danh sách cho phép không?
         if (!TASK_STATUS.includes(value)) {
-            return res.status(400).json({
-                code: 400,
-                message: "Trạng thái công việc không hợp lệ !!",
-            });
+          return res.status(400).json({
+            code: 400,
+            message: "Trạng thái công việc không hợp lệ !!",
+          });
         }
 
         // Thực hiện Update
         const resultStatus = await Task.updateMany(
           {
             _id: { $in: ids }, // Tìm các task có ID nằm trong danh sách
-            deleted: false,    // Chỉ update task chưa bị xóa
+            deleted: false, // Chỉ update task chưa bị xóa
           },
           {
             status: value,
@@ -183,27 +183,35 @@ export const changeMulti = async (req: Request, res: Response) => {
 
         // Báo kết quả
         return res.status(200).json({
-            code: 200,
-            message: "Cập nhật trạng thái thành công !!",
-            data: {
-                matched: resultStatus.matchedCount, // Số bản ghi tìm thấy
-                modified: resultStatus.modifiedCount // Số bản ghi thực sự thay đổi
-            }
+          code: 200,
+          message: "Cập nhật trạng thái thành công !!",
+          data: {
+            matched: resultStatus.matchedCount, // Số bản ghi tìm thấy
+            modified: resultStatus.modifiedCount, // Số bản ghi thực sự thay đổi
+          },
         });
 
       // Mở rộng thêm: Trường hợp muốn xóa nhiều (Soft Delete)
-      case "delete": 
+      case "delete":
         const resultDelete = await Task.updateMany(
-            { _id: { $in: ids }, deleted: false },
-            { 
-                deleted: true,
-                deletedAt: new Date() // Lưu thời gian xóa
-            }
+          { _id: { $in: ids }, deleted: false },
+          {
+            deleted: true,
+            deletedAt: new Date(), // Lưu thời gian xóa
+          }
         );
-        
+
+        if (resultDelete.matchedCount === 0) {
+          return res.status(404).json({
+            // 404: Not Found
+            code: 404,
+            message: "Không tìm thấy công việc (hoặc đã bị xóa)!",
+          });
+        }
+
         return res.status(200).json({
-            code: 200,
-            message: "Xóa thành công các công việc đã chọn !!",
+          code: 200,
+          message: "Xóa thành công các công việc đã chọn !!",
         });
 
       default:
@@ -212,7 +220,88 @@ export const changeMulti = async (req: Request, res: Response) => {
           message: "Trường dữ liệu này không được phép thay đổi !!",
         });
     }
+  } catch (e) {
+    console.log(e);
+    return res.status(500).json({
+      code: 500,
+      message: "Lỗi hệ thống!",
+    });
+  }
+};
 
+// định nghĩa interface cho dữ liệu người dùng gửi lên - chỉ liệt kê những trường mà người dùng sẽ gửi lên (nhập)
+interface TaskCreateBody {
+  title: string;
+  status?: string;
+  content?: string;
+  timeStart?: Date;
+  timeFinish?: Date;
+}
+
+export const createTask = async (
+  req: Request<{}, {}, TaskCreateBody>,
+  res: Response
+) => {
+  try {
+    // Lấy những dữ liệu cần thiêt
+    const { title, status, content, timeStart, timeFinish } = req.body;
+
+    // kiểm tra xem title có tồn tại hay không
+    if (!title || title.trim() === "") {
+      return res.status(400).json({
+        code: 400,
+        message: "Vui lòng nhập tiêu đề công việc!",
+      });
+    }
+
+    // Logic: Nếu có gửi status VÀ status đó KHÔNG nằm trong danh sách cho phép
+    if (status && !TASK_STATUS.includes(status)) {
+      return res.status(400).json({
+        code: 400,
+        message: `Trạng thái không hợp lệ! Chỉ chấp nhận: ${TASK_STATUS.join(
+          ", "
+        )}`,
+      });
+    }
+
+    // Validate Thời gian
+    if (timeStart && timeFinish) {
+      // Chuyển đổi sang đối tượng Date để so sánh cho chắc chắn
+      const start = new Date(timeStart);
+      const finish = new Date(timeFinish);
+
+      // Kiểm tra tính hợp lệ của ngày tháng (tránh trường hợp user gửi chuỗi lung tung)
+      if (isNaN(start.getTime()) || isNaN(finish.getTime())) {
+        return res.status(400).json({
+          code: 400,
+          message: "Định dạng ngày tháng không hợp lệ!",
+        });
+      }
+
+      // Logic chính: Bắt đầu > Kết thúc -> Lỗi
+      if (start > finish) {
+        return res.status(400).json({
+          code: 400,
+          message: "Thời gian bắt đầu không được lớn hơn thời gian kết thúc!",
+        });
+      }
+    }
+
+    const newTask = new Task({
+      title: title,
+      status: status, // nếu status là undefind thì tự động gán là initial
+      content: content,
+      timeStart: timeStart,
+      timeFinish: timeFinish,
+    });
+
+    await newTask.save();
+
+    return res.status(201).json({
+      code: 201,
+      message: "Tạo mới công việc thành công!",
+      data: newTask,
+    });
   } catch (e) {
     console.log(e);
     return res.status(500).json({
