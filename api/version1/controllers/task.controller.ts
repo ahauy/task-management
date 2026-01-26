@@ -1,6 +1,6 @@
 import { searchHelpers } from "./../../../helpers/searchHelpers";
 import { type Request, type Response } from "express";
-import Task, { TASK_STATUS } from "../models/task.model";
+import Task, { TASK_STATUS } from "../../../models/task.model";
 import { paginationHelpers } from "../../../helpers/paginationHelpers";
 
 export const index = async (req: Request, res: Response) => {
@@ -245,47 +245,6 @@ export const createTask = async (
   try {
     // Lấy những dữ liệu cần thiêt
     const { title, status, content, timeStart, timeFinish } = req.body;
-
-    // kiểm tra xem title có tồn tại hay không
-    if (!title || title.trim() === "") {
-      return res.status(400).json({
-        code: 400,
-        message: "Vui lòng nhập tiêu đề công việc!",
-      });
-    }
-
-    // Logic: Nếu có gửi status VÀ status đó KHÔNG nằm trong danh sách cho phép
-    if (status && !TASK_STATUS.includes(status)) {
-      return res.status(400).json({
-        code: 400,
-        message: `Trạng thái không hợp lệ! Chỉ chấp nhận: ${TASK_STATUS.join(
-          ", "
-        )}`,
-      });
-    }
-
-    // Validate Thời gian
-    if (timeStart && timeFinish) {
-      // Chuyển đổi sang đối tượng Date để so sánh cho chắc chắn
-      const start = new Date(timeStart);
-      const finish = new Date(timeFinish);
-
-      // Kiểm tra tính hợp lệ của ngày tháng (tránh trường hợp user gửi chuỗi lung tung)
-      if (isNaN(start.getTime()) || isNaN(finish.getTime())) {
-        return res.status(400).json({
-          code: 400,
-          message: "Định dạng ngày tháng không hợp lệ!",
-        });
-      }
-
-      // Logic chính: Bắt đầu > Kết thúc -> Lỗi
-      if (start > finish) {
-        return res.status(400).json({
-          code: 400,
-          message: "Thời gian bắt đầu không được lớn hơn thời gian kết thúc!",
-        });
-      }
-    }
 
     const newTask = new Task({
       title: title,
