@@ -16,11 +16,11 @@ export const userSchema = z.object({
       message: "Email này đã tồn tại!"
     }),
     password: passwordComplexSchema,
-    confirmPasword: passwordComplexSchema
+    confirmPassword: passwordComplexSchema
   })
     // kiểm tra password có giống với confirmPassword hay không ?
     .refine((data) => {
-      return data.password === data.confirmPasword
+      return data.password === data.confirmPassword
     }, {
       message: "Mật khẩu xác nhận không khớp!",
       path: ["confirmPassword"]
