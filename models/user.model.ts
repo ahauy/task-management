@@ -4,6 +4,7 @@ export interface IUser extends Document {
   fullName: string;
   email: String;
   password: string; // có thể để là optional nếu đăng nhập bằng fb hoặc gg nhưng trong dự án này chỉ cho đăng nhập bằng email và phải có mật khẩu
+  token: string;
   deleted: boolean;
   deletedAt?: Date;
   createdAt?: Date; // auto nhờ có timestamps: true
@@ -21,6 +22,11 @@ const userSchema = new mongoose.Schema<IUser> (
     password: {
       type: String,
       required: true
+    },
+    token: {
+      type: String,
+      required: true,
+      unique: true
     },
     deleted: {
       type: Boolean,
