@@ -237,7 +237,6 @@ interface TaskCreateBody {
   timeStart?: Date;
   timeFinish?: Date;
 }
-
 export const createTask = async (
   req: Request<{}, {}, TaskCreateBody>,
   res: Response
@@ -269,3 +268,4 @@ export const createTask = async (
     });
   }
 };
+
