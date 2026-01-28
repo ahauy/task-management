@@ -1,7 +1,8 @@
 import { type Request, type Response } from "express";
 import { generateRandomString } from "../../../helpers/generateRandomString";
-import bcrypt, { compare } from "bcryptjs";
-import User from "../../../models/user.model";
+import bcrypt from "bcryptjs";
+import User, { IUser } from "../../../models/user.model";
+import mongoose from "mongoose";
 
 export const postRegister = async (req: Request, res: Response) => {
   try {
@@ -70,6 +71,27 @@ export const postLogin = async (req: Request, res: Response) => {
     });
   } catch (e) {
     console.log(e);
-    res.status(500).json({ message: "Lỗi hệ thống" });
+    return res.status(500).json({ message: "Lỗi hệ thống" });
   }
 };
+
+interface AuthRequest extends Request {
+  user?: IUser
+}
+
+export const getDetail = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+
+    const user = req.user
+
+    res.status(200).json({
+      code: 200,
+      message: "Lấy người dùng thành công!",
+      user: user
+    })
+
+  } catch (e) {
+    console.log(e);
+    res.status(500).json({ message: "Lỗi hệ thống" });
+  }
+}

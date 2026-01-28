@@ -3,7 +3,20 @@ import { type Request, type Response } from "express";
 import Task, { TASK_STATUS } from "../../../models/task.model";
 import { paginationHelpers } from "../../../helpers/paginationHelpers";
 
-export const index = async (req: Request, res: Response) => {
+// interface cho cac req.querey
+interface IFilterQuery {
+  status?: string;
+  sortKey?: string;
+  sortValue?: string;
+  limit?: string;
+  keyword?: string
+}
+
+interface IReqParams {
+  id: string
+}
+// Thứ tự Generic của Request là: Request<P, ResBody, ReqBody, ReqQuery>
+export const index = async (req: Request<{}, {}, {}, IFilterQuery>, res: Response) => {
   try {
     interface Find {
       deleted: boolean;
@@ -63,8 +76,8 @@ export const index = async (req: Request, res: Response) => {
   }
 };
 
-export const detailTask = async (req: Request, res: Response) => {
-  const id = req.params.id;
+export const detailTask = async (req: Request<IReqParams, {}, {}, {}>, res: Response) => {
+  const id = req.params.id
 
   const task = await Task.findOne({
     _id: id,
@@ -74,7 +87,7 @@ export const detailTask = async (req: Request, res: Response) => {
   res.json(task);
 };
 
-export const changeStatus = async (req: Request, res: Response) => {
+export const changeStatus = async (req: Request<IReqParams>, res: Response) => {
   try {
     const id = req.params.id;
     const status: string = req.body.status; // Lấy status người dùng gửi lên
