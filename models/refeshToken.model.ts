@@ -1,9 +1,22 @@
-import mongoose, { Schema } from "mongoose";
+import mongoose, { Schema, Document } from "mongoose";
+
+// export interface IRefeshToken extends Document {
+//   userId: Schema.Types.ObjectId;
+//   token: string;
+//   expires: Date;
+//   created: Date;
+//   createByIp?: string;
+//   revoked?: Date;
+//   revokedByIp?: string;
+//   replacedByToken?: string;
+//   createdAt?: Date; // auto nhờ có timestamps: true
+//   updatedAt?: Date // auto nhờ có timestamps: true
+// }
 
 const refeshTokenSchema = new mongoose.Schema(
   {
     // chủ sử hưu chuỗi refesh-token này
-    user: {
+    userId: {
       type: Schema.Types.ObjectId,
       ref: "User",
       required: true,

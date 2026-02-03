@@ -2,16 +2,26 @@ import { Request, Response, NextFunction } from "express";
 import jwt from "jsonwebtoken";
 import User, { IUser } from "../models/user.model";
 
-// Định nghĩa lại Request để có thêm biến User để có thể gửi qua controller
-interface AuthRequest extends Request {
-  user?: IUser
+// Định nghĩa lại Request để có thêm biến id để có thể gửi qua controller
+interface IDRequest extends Request {
+  id?: string;
 }
 
 export const requireAuth = async (
-  req: AuthRequest,
+  req: IDRequest,
   res: Response,
   next: NextFunction
 ): Promise<void> => {
+
+  const accessTokenSecret = process.env.ACCESS_TOKEN
+
+  if(!accessTokenSecret) {
+    res.status(500).json({
+      message: "Lỗi cấu hình Sever!"
+    })
+    return
+  }
+
   try {
     // lấy token tử Header "Authorization: Bearer <token>"
     if (!req.headers.authorization) {
@@ -23,7 +33,7 @@ export const requireAuth = async (
     }
 
     // tách bearer ra để lấy chuối token
-    const token: string | undefined = req.headers.authorization.split(" ").at(1)
+    const token = req.headers.authorization.split(" ").at(1)
 
     if(!token) {
       res.status(401).json({
@@ -33,25 +43,16 @@ export const requireAuth = async (
       return
     }
 
-    // tìm xem có user nào có token như token gửi lên hay không ?
-    const user = await User.findOne({
-      token: token,
-      deleted: false
-    }).select("-password -token")
-
-    if(!user) {
-      res.status(401).json({
-        code: 401,
-        message: "Token không hợp lệ!"
-      })
-      return
-    }
-
-    // gắn user tìm được vào trong req để gửi sang controller
-    req.user = user
-
+    jwt.verify(token, process.env.ACCESS_TOKEN || "", (err: any, payload: any) => {
+      if(err) {
+        res.status(403).json({
+          error: "Token hết hạn hoặc không hợp lệ!"
+        })
+      }
+      req.id = payload.id
+    })
     next();
   } catch (e) {
-    res.status(401).json({ message: "Token hết hạn hoặc không hợp lệ!" });
+    res.status(500).json({ message: "Lỗi hệ thống!" });
   }
 };

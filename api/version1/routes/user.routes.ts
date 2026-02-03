@@ -11,5 +11,7 @@ routes.post("/login", validate(loginSchema), controller.postLogin)
 
 routes.get("/detail", requireAuth, controller.getDetail)
 
+routes.post("/refesh", controller.postRefeshToken)
+
 
 export const userRoutes: Router = routes

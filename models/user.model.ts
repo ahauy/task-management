@@ -2,7 +2,7 @@ import mongoose, {Schema, Document} from "mongoose"
 
 export interface IUser extends Document {
   fullName: string;
-  email: String;
+  email: string;
   password: string; // có thể để là optional nếu đăng nhập bằng fb hoặc gg nhưng trong dự án này chỉ cho đăng nhập bằng email và phải có mật khẩu
   token: string;
   deleted: boolean;
